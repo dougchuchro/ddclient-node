@@ -1,0 +1,24 @@
+{
+    "name": "ddclient-node",
+    "version": "1.0.0",
+    "description": "A simplified Node.js implementation of ddclient for dynamic DNS updates with Porkbun.",
+    "main": "src/index.js",
+    "scripts": {
+        "start": "node src/index.js",
+        "test": "echo \"No tests specified\" && exit 0"
+    },
+    "keywords": [
+        "ddclient",
+        "dynamic",
+        "DNS",
+        "Porkbun",
+        "nodejs"
+    ],
+    "author": "Doug Chuchro <doug@chuchro.net>",
+    "license": "MIT",
+    "dependencies": {
+        "axios": "^1.7.7",
+        "dotenv": "^16.4.5",
+        "winston": "^3.17.0"
+    }
+}

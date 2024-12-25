@@ -1,0 +1,5 @@
+node_modules/
+logs/
+cache/ip_cache.json
+.env
+setup.sh
