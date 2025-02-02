@@ -6,6 +6,15 @@
     "configurations": [
         {
             "type": "node",
+            "name": "Test index.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/test/testLogger.js"
+        },
+        {
+            "type": "node",
             "request": "launch",
             "name": "test Logger",
             "skipFiles": [

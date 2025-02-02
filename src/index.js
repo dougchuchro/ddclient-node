@@ -2,49 +2,57 @@ require('dotenv').config();
 const { checkPublicIP } = require('./ipChecker');
 const { checkCurrentDNS, updateDNS } = require('./porkbunApi');
 const { readCachedIP, updateCachedIP } = require('./cache');
+const createLogger = require('./logger');
+const logger = createLogger(); // Create a single shared logger
 
 async function checkAndUpdateDNS() {
     try {
-        const publicIP = await checkPublicIP();
-        console.log(`[${new Date().toISOString()}] Public IP: ${publicIP}`);
+        const publicIP = await checkPublicIP(logger);
+        logger.info(`Public IP: ${publicIP}`);
 
-        // Read the last known IP from the cache
-        const cachedIP = readCachedIP();
-
-        // If no cached IP is found, write the current public IP to the cache immediately
+        const cachedIP = readCachedIP(logger);
         if (!cachedIP) {
-            console.log("No cached IP found. Saving the current public IP to the cache.");
-            updateCachedIP(publicIP);
-            return; // Exit as there's no need to update DNS if this is the first run
+            logger.info("No cached IP found. Saving the current public IP to the cache.");
+            updateCachedIP(publicIP, logger);
+            return;
         }
 
-        // Only proceed with DNS check if the public IP differs from the cached IP
         if (publicIP !== cachedIP) {
-            console.log("Public IP has changed. Checking current DNS record...");
+            logger.info("Public IP has changed. Checking current DNS record...");
 
-            const currentRecord = await checkCurrentDNS(process.env.SUBDOMAIN, process.env.DOMAIN, process.env.TYPE);
+            const currentRecord = await checkCurrentDNS(process.env.SUBDOMAIN, process.env.DOMAIN, process.env.TYPE, logger);
             if (currentRecord.content !== publicIP) {
-                console.log("DNS record IP differs from public IP. Updating DNS...");
-                await updateDNS(currentRecord, publicIP);
-                updateCachedIP(publicIP); // Update the cache with the new IP
+                logger.info("DNS record IP differs from public IP. Updating DNS...");
+                await updateDNS(currentRecord, publicIP, logger);
+                updateCachedIP(publicIP, logger);
             } else {
-                console.log("DNS record IP matches public IP. No update needed.");
+                logger.info("DNS record IP matches public IP. No update needed.");
             }
         } else {
-            console.log("Public IP matches cached IP. No DNS update necessary.");
+            logger.info("Public IP matches cached IP. No DNS update necessary.");
         }
     } catch (error) {
-        console.error("Error in DNS check and update process:", error.message);
+        logger.error("Error in checkAndUpdateDNS:", error.message);
     }
 }
 
-
+function logEnvVariables() {
+    Object.entries(process.env).forEach(([key, value]) => {
+        // Mask sensitive keys
+        if (key.includes('SECRET') || key.includes('KEY')) {
+            value = '*****' + value.slice(-4); // Show only last 4 characters
+        }
+        logger.debug(`${key}: ${value}`);
+    });
+}
 // Get interval from .env and set up the recurring check
+logEnvVariables();
+
 const intervalSeconds = parseInt(process.env.CHECK_INTERVAL_SECONDS, 10) * 1000;
 if (isNaN(intervalSeconds) || intervalSeconds <= 0) {
-    console.error("Invalid CHECK_INTERVAL_SECONDS value in .env");
+    logger.error("Invalid CHECK_INTERVAL_SECONDS value in .env");
     process.exit(1);
 }
 
-console.log(`Starting DNS update checks every ${intervalSeconds / 1000} seconds...`);
+logger.info(`Starting DNS update checks every ${intervalSeconds / 1000} seconds...`);
 setInterval(checkAndUpdateDNS, intervalSeconds);

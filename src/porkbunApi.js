@@ -1,5 +1,6 @@
 // src/porkbunApi.js
 const axios = require('axios');
+const { log } = require('winston');
 require('dotenv').config();
 
 /**
@@ -10,7 +11,7 @@ require('dotenv').config();
  * @returns {Promise<string>} The current IP address for the DNS record.
  * @throws {Error} Throws an error if the API request fails or if no record is found.
  */
-async function checkCurrentDNS(subdomain, domain, type) {
+async function checkCurrentDNS(subdomain, domain, type, logger) {
     const apiKey = process.env.PORKBUN_API_KEY;
     const secretKey = process.env.PORKBUN_SECRET_KEY;
 
@@ -23,6 +24,7 @@ async function checkCurrentDNS(subdomain, domain, type) {
       
     try {
         const response = await axios.post(url, requestBody);
+        logger.info(`Response: ${JSON.stringify(response.data)}`);
 
         if (response.data.status !== 'SUCCESS' || !response.data.records) {
             throw new Error(`Failed to retrieve DNS record: ${response.data.message}. Request URL: ${url}. Request Body: ${JSON.stringify(requestBody)}`);
@@ -36,7 +38,6 @@ async function checkCurrentDNS(subdomain, domain, type) {
             throw new Error(`No ${type} record found for the specified subdomain. Request URL: ${url}. Request Body: ${JSON.stringify(requestBody)}`);
         }
     } catch (error) {
-        console.error('Error checking current DNS record:', error.message);
         throw new Error(`Error checking current DNS record: ${error.message}. Request URL: ${url}. Request Body: ${JSON.stringify(requestBody)}`);
     }
 }
@@ -48,8 +49,8 @@ async function checkCurrentDNS(subdomain, domain, type) {
  * @param {string} newIPAddress - The new IP address for the DNS record.
  * @returns {Promise<void>} Resolves if the update is successful, rejects with an error otherwise.
  */
-async function updateDNS(currentRecord, newIPAddress) {
-    console.log("current Record: " + JSON.stringify(currentRecord));
+async function updateDNS(currentRecord, newIPAddress, logger) {
+    logger.info(`Updating DNS record for ${currentRecord.name} to IP: ${newIPAddress}`);
     const apiKey = process.env.PORKBUN_API_KEY;
     const secretKey = process.env.PORKBUN_SECRET_KEY;
     const domain = process.env.DOMAIN;
@@ -69,29 +70,30 @@ async function updateDNS(currentRecord, newIPAddress) {
 
     try {
         const response = await axios.post(url, requestBody);
-        console.log("RESPONSE: " + JSON.stringify(response.data));
+        logger.info(`Response: ${JSON.stringify(response.data)}`);
         if (response.data.status !== 'SUCCESS') {
+            logger.error(`Failed to update DNS record. Message: ${response.data.message}`);
             throw new Error(`Failed to update DNS record. Message: ${response.data.message}`);
         }
-        console.log(`Successfully updated ${domain} to IP: ${newIPAddress}`);
+        logger.info(`Successfully updated ${domain} to IP: ${newIPAddress}`);
     } catch (error) {
-        console.error('Error updating DNS record:', error.message);
+        logger.error(`Error updating DNS record: ${error.message}`);
         throw new Error(`Error updating DNS record: ${error.message}`);
     }
 }
 
 // Example usage
-if (require.main === module) {
-    const subdomain = process.env.SUBDOMAIN; // e.g., 'home'
-    const domain = process.env.DOMAIN;       // e.g., 'example.com'
-    const type = process.env.TYPE;           // e.g., 'A'
+// if (require.main === module) {
+//     const subdomain = process.env.SUBDOMAIN; // e.g., 'home'
+//     const domain = process.env.DOMAIN;       // e.g., 'example.com'
+//     const type = process.env.TYPE;           // e.g., 'A'
 
-    checkCurrentDNS(subdomain, domain, type)
-        .then(currentIP => {
-            console.log(`Current IP for ${subdomain}.${domain} is: ${currentIP}`);
-            // You can then call updateDNS if you want to update it based on the current IP
-        })
-        .catch(error => console.error('Error:', error.message));
-}
+//     checkCurrentDNS(subdomain, domain, type)
+//         .then(currentIP => {
+//             console.log(`Current IP for ${subdomain}.${domain} is: ${currentIP}`);
+//             // You can then call updateDNS if you want to update it based on the current IP
+//         })
+//         .catch(error => console.error('Error:', error.message));
+// }
 
 module.exports = { updateDNS, checkCurrentDNS };

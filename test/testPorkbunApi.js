@@ -1,4 +1,6 @@
 // test/testPorkbunApi.js
+const createLogger = require('../src/logger');
+const logger = createLogger("./logs/testPorkbunApis.log"); // Create a single shared logger
 const { updateDNS, checkCurrentDNS } = require('../src/porkbunApi');
 
 async function testCheckCurrentDNS() {
@@ -6,13 +8,14 @@ async function testCheckCurrentDNS() {
     const domain = process.env.DOMAIN;       // e.g., 'example.com'
     const type = process.env.TYPE;           // e.g., 'A'
 
-    console.log(`Checking DNS for subdomain: ${subdomain}, domain: ${domain}, type: ${type}`);
+//    console.log(`Checking DNS for subdomain: ${subdomain}, domain: ${domain}, type: ${type}`);
+    logger.info(`Checking DNS for subdomain: ${subdomain}, domain: ${domain}, type: ${type}`);
 
     try {
-        const resp = await checkCurrentDNS(subdomain, domain, type);
-        console.log("TEST RESPONSE: ", JSON.stringify(resp));
+        const resp = await checkCurrentDNS(subdomain, domain, type, logger);
+        logger.info("TEST RESPONSE: " + JSON.stringify(resp));
+        logger.info(`Test Passed: Current IP for ${subdomain}.${domain} is: ${resp.content}`);
         return resp;
-//        console.log(`Test Passed: Current IP for ${subdomain}.${domain} is: ${currentIP}`);
     } catch (error) {
         console.error('Test Failed:', error.message);
     }
@@ -36,7 +39,7 @@ async function testUpdateDNS(currentRecord) {
 // Run the tests
 async function runTests() {
     const currentRecord = await testCheckCurrentDNS();
-    await testUpdateDNS(currentRecord);
+//    await testUpdateDNS(currentRecord);
 }
 
 runTests();

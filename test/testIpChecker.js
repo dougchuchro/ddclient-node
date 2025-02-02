@@ -1,12 +1,13 @@
-// test/testIpChecker.js
+const createLogger = require('../src/logger');
+const logger = createLogger("./logs/testIpChecker.log"); // Create a single shared logger
 const { checkPublicIP } = require('../src/ipChecker');
 
 async function testCheckPublicIP() {
     try {
-        const ip = await checkPublicIP();
-        console.log('Test Passed: Your public IP is:', ip);
+        const publicIP = await checkPublicIP(logger);
+        logger.info('Test Passed: Your public IP is:' + publicIP);
     } catch (error) {
-        console.error('Test Failed:', error.message);
+        logger.error('Test Failed:' + error.message);
     }
 }
 

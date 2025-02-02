@@ -5,7 +5,10 @@
     "main": "src/index.js",
     "scripts": {
         "start": "node src/index.js",
-        "test": "echo \"No tests specified\" && exit 0"
+        "test": "echo \"No tests specified\" && exit 0",
+        "testIpChecker": "node test/testIpChecker.js",
+        "testLogger": "node test/testLogger.js",
+        "testPorkbunApi": "node test/testPorkbunApi.js"
     },
     "keywords": [
         "ddclient",

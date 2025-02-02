@@ -1,13 +1,12 @@
-// src/ipChecker.js
 const axios = require('axios');
 require('dotenv').config();
 
 /**
- * Checks the current public IP address using the Porkbun "ping" API.
- * @returns {Promise<string>} The public IP address.
- * @throws {Error} Throws an error if the API request fails.
+ * Fetches the current public IP address.
+ * @param {object} logger - The logger instance to use.
+ * @returns {Promise<string>} - The public IP address.
  */
-async function checkPublicIP() {
+async function checkPublicIP(logger) {
     const apiKey = process.env.PORKBUN_API_KEY;
     const secretKey = process.env.PORKBUN_SECRET_KEY;
 
@@ -22,10 +21,11 @@ async function checkPublicIP() {
         if (response.data.status === 'SUCCESS') {
             return response.data.yourIp;
         } else {
+            logger.error(`Failed to get IP: ${response.data.message}`);
             throw new Error(`Failed to get IP: ${response.data.message}`);
         }
     } catch (error) {
-        console.error('Error checking public IP:', error.message);
+        logger.error('Error checking public IP:', error.message);
         throw error; // Rethrow error for further handling
     }
 }

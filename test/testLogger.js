@@ -1,8 +1,10 @@
-const logger = require('../src/logger');
+require('dotenv').config(); // Load .env variables into process.env
+const createLogger = require('../src/logger'); // Import the logger factory function
 const fs = require('fs');
 const path = require('path');
 
-const logFile = path.join(__dirname, 'logs', 'ddclient-node.log');
+const logFile = path.join('logs', 'testLogger.log');
+const logger = createLogger(logFile); // Instantiate the logger with a specific file
 
 function testLogger() {
     try {
@@ -17,6 +19,14 @@ function testLogger() {
         logger.warn('This is a warning message.');
         logger.error('This is an error message.');
         logger.debug('This is a debug message.');
+
+        // Log all environment variables (sorted alphabetically by key)
+        logger.info('Logging all environment variables (sorted):');
+        Object.entries(process.env)
+            .sort(([keyA], [keyB]) => keyA.localeCompare(keyB)) // Sort keys alphabetically
+            .forEach(([key, value]) => {
+                logger.info(`${key}: ${value}`);
+            });
 
         // Wait briefly to ensure logs are written to the file
         setTimeout(() => {
